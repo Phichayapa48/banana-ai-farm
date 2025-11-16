@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # --- Supabase Model URL ---
-MODEL_URL = "https://ypdmdfdwzldsifijajrm.supabase.co/storage/v1/object/sign/models/best_model.pt?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mM2JmYjY1Yi1kMjk2LTRjMmQtODI2OS0yZGFiNjhjNzM1MGIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYmVzdF9tb2RlbC5wdCIsImlhdCI6MTc2MzI5ODUyNCwiZXhwIjoxNzk0ODM0NTI0fQ._oxs0dHF9WLGWPglco7OA1fQx46hTVvT9X87TfD0ukc"
+MODEL_URL = "https://ypdmdfdwzldsifijajrm.supabase.co/storage/v1/object/sign/models/best_model.pt?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mM2JmYjY1Yi1kMjk2LTRjMmQtODI2OS0yZGFiNjhjNzM1MGIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYmVzdF9tb2RlbC5wdCIsImlhdCI6MTc2MzMwMjAzMCwiZXhwIjoxNzk0ODM4MDMwfQ.kKmBwGnVI8ZrtBOWeao_If2tbYZxNI-Ld1B78vUPK-U"
 MODEL_LOCAL_PATH = "best_model.pt"
 
 # --- โหลดโมเดลถ้าไฟล์ยังไม่มีใน backend ---
