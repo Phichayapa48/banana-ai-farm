@@ -1,6 +1,9 @@
 fastapi
-uvicorn
-supabase
+uvicorn[standard]
 torch
 ultralytics
-python-multipart
+rembg
+pillow
+requests
+numpy
+supabase
