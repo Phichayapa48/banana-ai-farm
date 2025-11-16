@@ -1,29 +1,22 @@
-from fastapi import FastAPI, File, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-from ultralytics import YOLO
-from pathlib import Path
-import shutil
-
-# โหลดโมเดล YOLOv8 ของเรา
-model = YOLO("model/best.pt")  # ใส่ path โมเดลของเรา
+from fastapi import FastAPI
+import torch
+import requests
 
 app = FastAPI()
 
-# ตั้งค่า CORS ให้เรียกจาก frontend ได้
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+MODEL_URL = "https://YOUR_SUPABASE_URL/storage/v1/object/public/model/best.pt"
+
+# โหลดโมเดลจาก Supabase
+def load_model():
+    response = requests.get(MODEL_URL)
+    with open("best.pt", "wb") as f:
+        f.write(response.content)
+    model = torch.hub.load('ultralytics/yolov8', 'custom', path='best.pt')
+    return model
+
+model = load_model()
 
 @app.post("/predict")
-async def predict(file: UploadFile = File(...)):
-    temp_file = f"temp_{file.filename}"
-    with open(temp_file, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    results = model(temp_file)
-    return results[0].boxes.data.tolist()  # ส่งผลลัพธ์เป็น list
-
+async def predict(image: bytes):
+    # ใช้ model.predict ทำงานกับ image
+    return {"result": "predicted_label"}
