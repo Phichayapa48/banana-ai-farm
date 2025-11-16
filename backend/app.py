@@ -1,4 +1,3 @@
-# backend/app.py
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
@@ -19,6 +18,21 @@ app.add_middleware(
 # --- Supabase Model URL ---
 MODEL_URL = "https://ypdmdfdwzldsifijajrm.supabase.co/storage/v1/object/sign/models/best_model.pt?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mM2JmYjY1Yi1kMjk2LTRjMmQtODI2OS0yZGFiNjhjNzM1MGIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYmVzdF9tb2RlbC5wdCIsImlhdCI6MTc2MzI5ODUyNCwiZXhwIjoxNzk0ODM0NTI0fQ._oxs0dHF9WLGWPglco7OA1fQx46hTVvT9X87TfD0ukc"
 MODEL_LOCAL_PATH = "best_model.pt"
+
+# --- Mapping class_id → ชื่อสายพันธุ์กล้วย ---
+CLASS_MAPPING = {
+    0: "กล้วยแคนดี้แอปเปิ้ล",
+    1: "กล้วยน้ำว้า",
+    2: "กล้วยน้ำว้าดำ",
+    3: "กล้วยหอมทอง",
+    4: "กล้วยนาก",
+    5: "กล้วยเทพพนม",
+    6: "กล้วยไข่",
+    7: "กล้วยเล็บช้างกุด",
+    8: "กล้วยงาช้าง"
+    9: "กล้วยฮัวเมา",
+    # เพิ่ม class อื่น ๆ ตามโมเดล
+}
 
 # --- โหลดโมเดลถ้าไฟล์ยังไม่มีใน backend ---
 if not os.path.exists(MODEL_LOCAL_PATH):
@@ -57,13 +71,14 @@ async def predict(file: UploadFile = File(...)):
         boxes = result.boxes.xyxy.cpu().numpy()  # x1, y1, x2, y2
         confs = result.boxes.conf.cpu().numpy()
         classes = result.boxes.cls.cpu().numpy()
-        labels = result.boxes.cls.cpu().numpy()  # หรือ map class id เป็นชื่อ class
         for i in range(len(boxes)):
+            class_id = int(classes[i])
+            label = CLASS_MAPPING.get(class_id, f"class_{class_id}")
             output.append({
                 "bbox": boxes[i].tolist(),
                 "confidence": float(confs[i]),
-                "class_id": int(classes[i]),
-                "label": str(labels[i])
+                "class_id": class_id,
+                "label": label
             })
 
     return {"predictions": output}
