@@ -1,8 +1,8 @@
-fastapi==0.95.2
-uvicorn[standard]==0.22.0
-rembg==2.0.27
-ultralytics==8.3.166
-torch==2.2.2+cpu
-pillow==10.0.0
-requests==2.31.0
-numpy==1.26.0
+fastapi
+uvicorn
+python-multipart
+Pillow
+numpy
+supabase
+ultralytics
+rembg
