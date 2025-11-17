@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# ติดตั้ง dependencies ที่จำเป็นสำหรับ OpenCV, rembg, และ YOLO
+# ติดตั้ง OS dependencies ที่จำเป็น
 RUN apt-get update && apt-get install -y \
     curl \
     libglib2.0-0 \
@@ -17,10 +17,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app ทั้งหมด
+# Copy โค้ดทั้งหมด
 COPY . .
 
-# ให้สามารถรันไฟล์ shell script ได้ (ถ้ามี)
+# ให้สามารถรัน shell script (ถ้ามี)
 RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
