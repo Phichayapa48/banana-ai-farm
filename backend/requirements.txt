@@ -1,9 +1,9 @@
 fastapi
 uvicorn
-python-multipart
-Pillow
-numpy
-supabase
-ultralytics
+requests
+pillow
 rembg
+ultralytics
+torch
+numpy
 onnxruntime
