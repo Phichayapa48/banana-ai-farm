@@ -1,4 +1,3 @@
-# app.py
 import os
 import io
 import requests
@@ -8,12 +7,16 @@ from PIL import Image, ImageOps, ImageFilter
 from rembg import remove
 from ultralytics import YOLO
 import torch
+import numpy as np
 
-# --- Config ---
-MODEL_URL = "https://ypdmdfdwzldsifijajrm.supabase.co/storage/v1/object/sign/models/best_model.pt?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9mM2JmYjY1Yi1kMjk2LTRjMmQtODI2OS0yZGFiNjhjNzM1MGIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYmVzdF9tb2RlbC5wdCIsImlhdCI6MTc2MzM2Nzk3MSwiZXhwIjoxNzk0OTAzOTcxfQ.x9IUU--KnWphbtjPojB6PmKAfCkPAwaGeOzh4kO_ImM"  # ใส่ token จริง
-MODEL_LOCAL_PATH = "best_model.pt"
-
+# --- Config from environment variables ---
+MODEL_URL = os.environ.get("MODEL_URL")  # ใส่ค่าใน Render Dashboard
+MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.pt")
 PORT = int(os.environ.get("PORT", 8000))
+
+# Supabase keys (ถ้าต้องการใช้ต่อภายหลัง)
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 # --- FastAPI app ---
 app = FastAPI()
@@ -29,6 +32,8 @@ model = None
 
 # --- Download model if not exists ---
 def download_model_if_needed():
+    if MODEL_URL is None:
+        raise ValueError("❌ MODEL_URL is not set in environment variables!")
     if os.path.exists(MODEL_LOCAL_PATH) and os.path.getsize(MODEL_LOCAL_PATH) > 1000:
         print("✅ Model already exists locally.")
         return
@@ -52,21 +57,13 @@ def load_model():
 
 # --- Preprocess image ---
 def preprocess_image_pil(pil_img: Image.Image, size=640):
-    # Fix orientation
     pil_img = ImageOps.exif_transpose(pil_img)
-
-    # Optional: sharpen slightly
     pil_img = pil_img.filter(ImageFilter.UnsharpMask(radius=1, percent=100, threshold=3))
-
-    # Remove background (optional)
     try:
         pil_img = remove(pil_img)
     except Exception as e:
         print("⚠️ rembg failed:", e)
-
-    # Make square with padding
     pil_img = ImageOps.pad(pil_img.convert("RGB"), (size, size), method=Image.Resampling.LANCZOS)
-
     return pil_img
 
 # --- Startup event ---
@@ -89,11 +86,9 @@ async def detect(file: UploadFile = File(...)):
     img_pre = preprocess_image_pil(img, size=640)
     np_img = np.array(img_pre)
 
-    # Inference
     with torch.no_grad():
         results = model.predict(source=np_img, imgsz=640, conf=0.25, iou=0.45)
 
-    # Build response
     detections = []
     r = results[0]
     boxes = getattr(r, "boxes", [])
