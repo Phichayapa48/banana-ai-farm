@@ -5,3 +5,4 @@ numpy
 rembg[lite]
 onnxruntime
 requests
+python-multipart
