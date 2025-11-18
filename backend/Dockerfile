@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . .
 
 # เปิด port ให้ Render detect
-EXPOSE 10000
+EXPOSE 8000
 
 # เรียก uvicorn โดยอ่าน port จาก environment variable PORT
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]
