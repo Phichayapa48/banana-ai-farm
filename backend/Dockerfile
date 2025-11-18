@@ -18,6 +18,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy code
 COPY . .
 
-# Let Render detect port
-EXPOSE 8050
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]
+# Let Render detect port (EXPOSE is informational here)
+EXPOSE 8000
+
+# Use env PORT if provided by Render, fallback to 8000
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
