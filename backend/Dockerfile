@@ -1,27 +1,25 @@
 FROM python:3.11-slim
 
-# ติดตั้ง OS dependencies
+# ลดขนาด + ติดตั้งเฉพาะที่จำเป็น
 RUN apt-get update && apt-get install -y \
-    curl \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender1 \
-    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy requirements และติดตั้ง
+# ติดตั้ง dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy โค้ดทั้งหมด
+# นำโค้ดเข้ามา
 COPY . .
 
-# ให้สามารถรัน entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# เปิด port ให้ Render detect
+EXPOSE 10000
 
-EXPOSE 8000
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+# เรียก uvicorn ตรง ๆ (ไม่ผ่าน entrypoint.sh)
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
