@@ -10,7 +10,7 @@ import numpy as np
 # --- Config ---
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.onnx")
-PORT = int(os.environ.get("PORT", 10000))
+PORT = int(os.environ.get("PORT", 8000))
 MAX_UPLOAD_MB = 5  # limit upload size
 IMG_SIZE = int(os.environ.get("IMG_SIZE", 640))  # ถ้าต้องการปรับได้จาก env
 
