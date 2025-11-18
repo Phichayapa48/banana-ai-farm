@@ -14,8 +14,7 @@ WORKDIR /app
 
 # Copy requirements และติดตั้ง
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy โค้ดทั้งหมด
 COPY . .
@@ -25,5 +24,4 @@ RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
-# Start container ผ่าน entrypoint.sh
 ENTRYPOINT ["/app/entrypoint.sh"]
