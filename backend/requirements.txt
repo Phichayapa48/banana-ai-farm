@@ -1,8 +1,8 @@
 fastapi
-uvicorn[standard]
+uvicorn
 pillow
 numpy
-rembg[lite]
 onnxruntime
-requests
+rembg[lite]
 python-multipart
+requests
