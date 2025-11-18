@@ -21,5 +21,5 @@ COPY . .
 # เปิด port ให้ Render detect
 EXPOSE 10000
 
-# เรียก uvicorn ใช้ environment PORT ของ Render
+# เรียก uvicorn โดยอ่าน port จาก environment variable PORT
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-10000}"]
