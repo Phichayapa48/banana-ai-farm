@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# ลดขนาด + ติดตั้งเฉพาะที่จำเป็น
+# OS deps
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -10,16 +10,16 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# ติดตั้ง dependencies
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# นำโค้ดเข้ามา
+# Copy code
 COPY . .
 
-# เปิด port ให้ Render detect
+# Let Render detect port
 EXPOSE 8000
 
-# เรียก uvicorn โดยอ่าน port จาก environment variable PORT
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]
+# CMD binds uvicorn to environment variable PORT
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
