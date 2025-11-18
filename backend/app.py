@@ -7,14 +7,11 @@ from rembg import remove
 import onnxruntime as ort
 import numpy as np
 
-# --- Config from environment variables ---
+# --- Config ---
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.onnx")
 PORT = int(os.environ.get("PORT", 8000))
-
-# Supabase keys (optional)
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+MAX_UPLOAD_MB = 5  # limit upload size
 
 # --- FastAPI app ---
 app = FastAPI()
@@ -28,47 +25,47 @@ app.add_middleware(
 # --- Model placeholder ---
 session = None
 
-# --- Download model if needed ---
+# --- Download model ---
 def download_model_if_needed():
     if MODEL_URL is None:
-        raise ValueError("❌ MODEL_URL is not set in environment variables!")
+        raise ValueError("❌ MODEL_URL not set!")
     if os.path.exists(MODEL_LOCAL_PATH) and os.path.getsize(MODEL_LOCAL_PATH) > 1000:
-        print("✅ Model already exists locally.")
+        print("✅ Model exists")
         return
     import requests
-    print("⬇️ Downloading model from URL...")
+    print("⬇️ Downloading model...")
     with requests.get(MODEL_URL, stream=True, timeout=60) as r:
         r.raise_for_status()
         with open(MODEL_LOCAL_PATH, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
-    print("✅ Model downloaded.")
+    print("✅ Download complete")
 
-# --- Load ONNX model ---
+# --- Load model ---
 def load_model():
     global session
     if session is None:
         download_model_if_needed()
         session = ort.InferenceSession(MODEL_LOCAL_PATH)
-        print("🚀 ONNX model loaded")
+        print("🚀 ONNX loaded")
 
-# --- Preprocess image: Resize -> Remove BG ---
+# --- Preprocess image (resize + remove bg) ---
 def preprocess_image(pil_img: Image.Image, size=640):
     pil_img = ImageOps.exif_transpose(pil_img)
     pil_img = ImageOps.pad(pil_img.convert("RGB"), (size, size), method=Image.Resampling.LANCZOS)
     try:
-        pil_img = remove(pil_img)  # rembg lite by default
+        pil_img = remove(pil_img)
     except Exception as e:
         print("⚠️ rembg failed:", e)
     return pil_img
 
-# --- Startup event ---
+# --- Startup ---
 @app.on_event("startup")
 async def startup_event():
     load_model()
 
-# --- Helper: bytes -> PIL ---
+# --- Convert bytes -> PIL ---
 def bytes_to_pil(b: bytes):
     return Image.open(io.BytesIO(b))
 
@@ -77,22 +74,21 @@ def bytes_to_pil(b: bytes):
 async def detect(file: UploadFile = File(...)):
     if file.content_type.split("/")[0] != "image":
         raise HTTPException(400, "File must be an image")
-
+    
+    if file.spool_max_size > MAX_UPLOAD_MB * 1024 * 1024:
+        raise HTTPException(400, f"Max upload size {MAX_UPLOAD_MB} MB exceeded")
+    
     contents = await file.read()
     img = bytes_to_pil(contents).convert("RGB")
     img_pre = preprocess_image(img, size=640)
-    np_img = np.array(img_pre).astype(np.float32) / 255.0  # normalize
-
-    # Add batch dimension
+    
+    np_img = np.array(img_pre).astype(np.float32) / 255.0
     input_tensor = np.transpose(np_img, (2, 0, 1))[None, :, :, :]
-
-    # Run ONNX inference
+    
     input_name = session.get_inputs()[0].name
     outputs = session.run(None, {input_name: input_tensor})
-
-    # Simplified output (depends on model)
+    
     detections = outputs[0].tolist() if len(outputs) > 0 else []
-
     return {"detections": detections}
 
 if __name__ == "__main__":
