@@ -10,7 +10,7 @@ import numpy as np
 # --- Config from environment variables ---
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.onnx")
-PORT = int(os.environ.get("PORT", 10000))
+PORT = int(os.environ.get("PORT", 8000))
 
 # Supabase keys (optional)
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
