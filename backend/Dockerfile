@@ -21,5 +21,5 @@ COPY . .
 # เปิด port ให้ Render detect
 EXPOSE 10000
 
-# เรียก uvicorn ตรง ๆ (ไม่ผ่าน entrypoint.sh)
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "10000"]
+# เรียก uvicorn ใช้ environment PORT ของ Render
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-10000}"]
