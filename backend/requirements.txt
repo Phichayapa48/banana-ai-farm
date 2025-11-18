@@ -1,9 +1,7 @@
 fastapi
-uvicorn
-requests
+uvicorn[standard]
 pillow
-rembg
-ultralytics
-torch
 numpy
+rembg[lite]
 onnxruntime
+requests
