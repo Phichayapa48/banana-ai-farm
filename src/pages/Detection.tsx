@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { detectBanana } from "@/api";
 
 export default function Detection() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -35,22 +36,11 @@ export default function Detection() {
     setDetecting(true);
 
     try {
-      // Convert base64 → Blob เพื่อส่งไป backend
+      // Convert base64 → Blob
       const blob = await fetch(imagePreview).then(res => res.blob());
-      const formData = new FormData();
-      formData.append("file", blob, "banana.jpg");
 
-      // เรียก API บน Railway
-      const res = await fetch("https://banana-ai-farm-production.up.railway.app/detect", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error("API Error");
-      }
-
-      const data = await res.json();
+      // เรียก API ผ่าน api.js
+      const data = await detectBanana(blob);
 
       setResult({
         variety: data.class_name,
