@@ -20,13 +20,11 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# --- Expose port for Railway ---
+# --- Expose port (optional, mainly for documentation) ---
 EXPOSE 8000
 
 # --- Set default environment variables ---
 ENV MODEL_LOCAL_PATH=best_model.onnx
-ENV RMBG_MODEL=u2netp  # ใช้โมเดล rembg ขนาดเล็ก
-ENV IMG_SIZE=640
 
-# --- Start FastAPI server with dynamic PORT ---
+# --- Start FastAPI server with dynamic Railway PORT ---
 CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
