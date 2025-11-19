@@ -12,9 +12,6 @@ RUN apt-get update && apt-get install -y \
 # --- Set working directory ---
 WORKDIR /app
 
-# --- Cache busting to force rebuild ---
-ARG CACHEBUST=1
-
 # --- Copy backend code ---
 COPY backend/ .
 
@@ -23,11 +20,11 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# --- Expose port ---
+# --- Expose port (optional, mainly for documentation) ---
 EXPOSE 8000
 
-# --- Default env ---
+# --- Set default environment variables ---
 ENV MODEL_LOCAL_PATH=best_model.onnx
 
-# --- Start FastAPI server ---
+# --- Start FastAPI server with dynamic Railway PORT ---
 CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
