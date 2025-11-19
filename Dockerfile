@@ -26,4 +26,5 @@ EXPOSE 8000
 ENV MODEL_LOCAL_PATH=best_model.onnx
 
 # --- Start FastAPI server ---
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]
+CMD python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
+
