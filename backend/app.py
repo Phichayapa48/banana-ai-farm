@@ -2,7 +2,7 @@ import os
 import io
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image, ImageOps
+from PIL import Image
 from rembg.bg import remove
 import onnxruntime as ort
 import numpy as np
@@ -10,15 +10,19 @@ import numpy as np
 # --- Config ---
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.onnx")
+
+# Railway จะส่ง PORT ให้เสมอ
 PORT = int(os.environ.get("PORT", 8000))
+
+# memory-safe config
 MAX_UPLOAD_MB = 5
 
-# --- Use lightweight Rembg model ---
+# ใช้โมเดลเล็กของ rembg
 os.environ["RMBG_MODEL"] = "u2netp"
 
 session = None
 
-# --- Download model ---
+# --- Download ONNX model ---
 def download_model_if_needed():
     if not MODEL_URL:
         raise ValueError("MODEL_URL not set")
@@ -62,16 +66,6 @@ app.add_middleware(
 def root():
     return {"message": "Banana Model API running", "status": "ok"}
 
-def preprocess_image(pil_img: Image.Image):
-    # Keep original resolution, just convert to RGB and remove background
-    pil_img = ImageOps.exif_transpose(pil_img)
-    pil_img = pil_img.convert("RGB")
-    try:
-        pil_img = remove(pil_img)
-    except Exception as e:
-        print("⚠️ rembg failed:", e)
-    return pil_img
-
 def bytes_to_pil(b):
     return Image.open(io.BytesIO(b))
 
@@ -82,20 +76,25 @@ async def detect(file: UploadFile = File(...)):
 
     contents = await file.read()
     if len(contents) > MAX_UPLOAD_MB * 1024 * 1024:
-        raise HTTPException(400, f"Max upload size exceeded ({MAX_UPLOAD_MB}MB)")
+        raise HTTPException(400, "Max upload size exceeded (5MB)")
 
     if session is None:
         load_model()
 
-    img = bytes_to_pil(contents)
-    img_pre = preprocess_image(img)
+    img = bytes_to_pil(contents).convert("RGB")
+
+    # --- ลบพื้นหลังด้วย rembg (u2netp) ---
+    try:
+        img_pre = remove(img)
+    except Exception as e:
+        print("⚠️ rembg failed:", e)
+        img_pre = img
 
     arr = np.array(img_pre).astype(np.float32) / 255.0
     arr = np.transpose(arr, (2, 0, 1))[None, :, :, :]
 
     input_name = session.get_inputs()[0].name
     outputs = session.run(None, {input_name: arr})
-
     detections = outputs[0].tolist() if len(outputs) > 0 else []
 
     return {"detections": detections}
