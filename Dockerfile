@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# OS deps
+# --- OS dependencies ---
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -8,17 +8,22 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
+# --- Set working directory ---
 WORKDIR /app
 
-# Copy backend code
+# --- Copy backend ---
 COPY backend/ .
 
-# Install dependencies
+# --- Install Python dependencies ---
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# --- Expose port for Railway ---
 EXPOSE 8000
 
-# Start server with PORT from Railway
+# --- Set environment variables defaults ---
+ENV MODEL_LOCAL_PATH=best_model.onnx
+
+# --- Start FastAPI server ---
 CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port $PORT"]
