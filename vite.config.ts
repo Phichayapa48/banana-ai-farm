@@ -13,6 +13,6 @@ export default defineConfig(({ mode }) => ({
   },
   define: {
     // ให้ Vite อ่าน env variable ของ Pages
-    "import.meta.env.VITE_API_BASE": JSON.stringify(process.env.VITE_API_BASE),
+    "import.meta.env.VITE_API_BASE": JSON.stringify(process.env.VITE_API_BASE || "https://banana-ai-farm-production.up.railway.app")
   },
 }));
