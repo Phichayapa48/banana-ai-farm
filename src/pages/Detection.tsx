@@ -33,28 +33,52 @@ export default function Detection() {
     }
 
     setDetecting(true);
-    
-    // Simulate AI detection - In production, this would call your external FastAPI service
-    setTimeout(() => {
-      setResult({
-        variety: "กล้วยน้ำว้า (Namwa Banana)",
-        confidence: "95%",
-        description: "กล้วยน้ำว้ามีรสชาติหวานหอม เนื้อแน่น เหมาะสำหรับรับประทานสด",
-        tips: "ปลูกในที่ร่มรำไร ดินร่วนซุย รดน้ำสม่ำเสมอ",
-        benefits: "อุดมไปด้วยวิตามินและแร่ธาตุ ช่วยเสริมพลังงาน",
+
+    try {
+      // Convert base64 → Blob เพื่อส่งไป backend
+      const blob = await fetch(imagePreview).then(res => res.blob());
+      const formData = new FormData();
+      formData.append("file", blob, "banana.jpg");
+
+      // เรียก API บน Railway
+      const res = await fetch("https://banana-ai-farm-production.up.railway.app/detect", {
+        method: "POST",
+        body: formData,
       });
-      setDetecting(false);
+
+      if (!res.ok) {
+        throw new Error("API Error");
+      }
+
+      const data = await res.json();
+
+      setResult({
+        variety: data.class_name,
+        confidence: `${(data.confidence * 100).toFixed(1)}%`,
+        description: data.description || "—",
+        tips: data.tips || "—",
+        benefits: data.benefits || "—",
+      });
+
       toast({
         title: "ตรวจสอบเสร็จสิ้น",
-        description: "พบพันธุ์กล้วยน้ำว้า",
+        description: `พบพันธุ์: ${data.class_name}`,
       });
-    }, 2000);
+    } catch (error) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถเชื่อมต่อกับระบบตรวจจับได้",
+        variant: "destructive",
+      });
+    }
+
+    setDetecting(false);
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
@@ -133,7 +157,7 @@ export default function Detection() {
                         ความแม่นยำ: {result.confidence}
                       </p>
                     </div>
-                    
+
                     <div>
                       <h4 className="font-semibold mb-2">คำอธิบาย</h4>
                       <p className="text-muted-foreground">{result.description}</p>
@@ -165,8 +189,8 @@ export default function Detection() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                <strong>สำหรับเวอร์ชันโปรดักชัน:</strong> หน้านี้พร้อมสำหรับการเชื่อมต่อกับ FastAPI service ที่รัน YOLOv8n model 
-                ขณะนี้แสดงผลลัพธ์ตัวอย่างเพื่อการสาธิต คุณสามารถเชื่อมต่อกับ AI endpoint ของคุณได้โดยการแก้ไขฟังก์ชัน handleDetect()
+                ระบบนี้เชื่อมต่อกับ FastAPI บน Railway โดยตรง  
+                สามารถอัปโหลดรูปภาพจริงและตรวจสอบพันธุ์กล้วยได้ทันที
               </p>
             </CardContent>
           </Card>
