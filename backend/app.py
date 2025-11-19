@@ -3,7 +3,7 @@ import io
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps
-from rembg import remove
+from rembg.bg import remove
 import onnxruntime as ort
 import numpy as np
 
@@ -17,6 +17,9 @@ PORT = int(os.environ.get("PORT", 8000))
 # memory-safe config
 MAX_UPLOAD_MB = 5
 IMG_SIZE = int(os.environ.get("IMG_SIZE", 640))
+
+# --- Set rembg to use smaller model ---
+os.environ["RMBG_MODEL"] = "u2netp"
 
 session = None
 
@@ -62,7 +65,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.get("/")
 def root():
     return {"message": "Banana Model API running", "status": "ok"}
@@ -72,7 +74,7 @@ def preprocess_image(pil_img: Image.Image, size=IMG_SIZE):
     pil_img = ImageOps.exif_transpose(pil_img)
     pil_img = ImageOps.pad(pil_img.convert("RGB"), (size, size))
     try:
-        pil_img = remove(pil_img)
+        pil_img = remove(pil_img)  # ใช้ u2netp แทน u2net
     except Exception as e:
         print("⚠️ rembg failed:", e)
     return pil_img
