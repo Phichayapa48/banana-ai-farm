@@ -19,12 +19,11 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# --- Expose default port ---
+# --- Expose default port (optional) ---
 EXPOSE 8000
 
 # --- Set environment variables defaults ---
 ENV MODEL_LOCAL_PATH=best_model.onnx
 
-# --- Start FastAPI server using ENTRYPOINT ---
-ENTRYPOINT ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0"]
-CMD ["--port", "8000"]
+# --- Start FastAPI server using dynamic PORT from Railway ---
+CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
