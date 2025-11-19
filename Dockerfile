@@ -1,3 +1,4 @@
+# --- Base image ---
 FROM python:3.11-slim
 
 # --- OS dependencies ---
@@ -11,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 # --- Set working directory ---
 WORKDIR /app
 
-# --- Copy backend ---
+# --- Copy backend code ---
 COPY backend/ .
 
 # --- Install Python dependencies ---
@@ -19,11 +20,13 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# --- Expose default port (optional) ---
+# --- Expose port for Railway ---
 EXPOSE 8000
 
-# --- Set environment variables defaults ---
+# --- Set default environment variables ---
 ENV MODEL_LOCAL_PATH=best_model.onnx
+ENV RMBG_MODEL=u2netp  # ใช้โมเดล rembg ขนาดเล็ก
+ENV IMG_SIZE=640
 
-# --- Start FastAPI server using dynamic PORT from Railway ---
+# --- Start FastAPI server with dynamic PORT ---
 CMD ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
