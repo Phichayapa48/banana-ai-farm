@@ -3,7 +3,7 @@ import io
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image, ImageOps
-from rembg.bg import remove
+from rembg import remove
 import onnxruntime as ort
 import numpy as np
 
@@ -11,19 +11,12 @@ import numpy as np
 MODEL_URL = os.environ.get("MODEL_URL")
 MODEL_LOCAL_PATH = os.environ.get("MODEL_LOCAL_PATH", "best_model.onnx")
 
-# Railway ส่ง PORT=xxxxx ให้เสมอ
 PORT = int(os.environ.get("PORT", 8000))
-
-# memory-safe config
-MAX_UPLOAD_MB = 5
-IMG_SIZE = int(os.environ.get("IMG_SIZE", 320))  # ลดขนาดภาพลงเหลือ 320
-
-# --- ใช้โมเดลเล็กของ rembg ---
-os.environ["RMBG_MODEL"] = "u2netp"
+MAX_UPLOAD_MB = 5  # จำกัดไฟล์สูงสุด 5MB
 
 session = None
 
-# --- Download ONNX model ---
+# --- Download model ---
 def download_model_if_needed():
     if not MODEL_URL:
         raise ValueError("MODEL_URL not set")
@@ -42,8 +35,7 @@ def download_model_if_needed():
                     f.write(chunk)
     print("✅ Download complete")
 
-
-# --- Load ONNX model ---
+# --- Load ONNX model แบบ lazy load ---
 def load_model():
     global session
     if session is None:
@@ -53,7 +45,6 @@ def load_model():
             providers=["CPUExecutionProvider"]
         )
         print("🚀 Model loaded on CPU")
-
 
 # --- FastAPI app ---
 app = FastAPI()
@@ -69,20 +60,17 @@ app.add_middleware(
 def root():
     return {"message": "Banana Model API running", "status": "ok"}
 
-
-def preprocess_image(pil_img: Image.Image, size=IMG_SIZE):
-    pil_img = ImageOps.exif_transpose(pil_img)
-    pil_img = ImageOps.fit(pil_img.convert("RGB"), (size, size))  # memory-safe
-    try:
-        pil_img = remove(pil_img)  # ใช้ u2netp
-    except Exception as e:
-        print("⚠️ rembg failed:", e)
-    return pil_img
-
-
 def bytes_to_pil(b):
     return Image.open(io.BytesIO(b))
 
+def preprocess_image(pil_img: Image.Image):
+    pil_img = ImageOps.exif_transpose(pil_img)
+    pil_img = pil_img.convert("RGB")
+    try:
+        pil_img = remove(pil_img)  # ใช้ u2net ปกติ
+    except Exception as e:
+        print("⚠️ rembg failed:", e)
+    return pil_img
 
 @app.post("/detect")
 async def detect(file: UploadFile = File(...)):
@@ -97,19 +85,21 @@ async def detect(file: UploadFile = File(...)):
     if session is None:
         load_model()
 
-    img = bytes_to_pil(contents).convert("RGB")
-    img_pre = preprocess_image(img, size=IMG_SIZE)
+    img = bytes_to_pil(contents)
+    img_pre = preprocess_image(img)
 
-    arr = np.array(img_pre).astype(np.float32) / 255.0
+    arr = np.array(img_pre, dtype=np.float32) / 255.0
     arr = np.transpose(arr, (2, 0, 1))[None, :, :, :]
 
     input_name = session.get_inputs()[0].name
-    outputs = session.run(None, {input_name: arr})
-
-    detections = outputs[0].tolist() if len(outputs) > 0 else []
+    try:
+        outputs = session.run(None, {input_name: arr})
+        detections = outputs[0].tolist() if len(outputs) > 0 else []
+    except Exception as e:
+        print("⚠️ ONNX inference failed:", e)
+        detections = []
 
     return {"detections": detections}
-
 
 if __name__ == "__main__":
     import uvicorn
