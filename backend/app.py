@@ -16,14 +16,14 @@ PORT = int(os.environ.get("PORT", 8000))
 
 # memory-safe config
 MAX_UPLOAD_MB = 5
-IMG_SIZE = int(os.environ.get("IMG_SIZE", 640))
+IMG_SIZE = int(os.environ.get("IMG_SIZE", 320))  # ลดขนาดภาพลงเหลือ 320
 
-# --- Set rembg to use smaller model ---
+# --- ใช้โมเดลเล็กของ rembg ---
 os.environ["RMBG_MODEL"] = "u2netp"
 
 session = None
 
-# --- Download model ---
+# --- Download ONNX model ---
 def download_model_if_needed():
     if not MODEL_URL:
         raise ValueError("MODEL_URL not set")
@@ -72,9 +72,9 @@ def root():
 
 def preprocess_image(pil_img: Image.Image, size=IMG_SIZE):
     pil_img = ImageOps.exif_transpose(pil_img)
-    pil_img = ImageOps.pad(pil_img.convert("RGB"), (size, size))
+    pil_img = ImageOps.fit(pil_img.convert("RGB"), (size, size))  # memory-safe
     try:
-        pil_img = remove(pil_img)  # ใช้ u2netp แทน u2net
+        pil_img = remove(pil_img)  # ใช้ u2netp
     except Exception as e:
         print("⚠️ rembg failed:", e)
     return pil_img
