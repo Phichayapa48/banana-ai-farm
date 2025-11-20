@@ -113,6 +113,7 @@ async def detect(file: UploadFile = File(...)):
 
     # Remove BG (with u2netp)
     try:
+        os.environ["RMBG_SESSION_THREADS"] = "1"
         img_no_bg = remove(img)
     except Exception as e:
         print("⚠️ rembg failed:", e)
