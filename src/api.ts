@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE;
+// ใช้ค่า env หรือ fallback เป็น URL จริงของ backend
+const BASE_URL =
+  import.meta.env.VITE_API_BASE ||
+  "https://banana-ai-farm-production.up.railway.app";
 
 export const detectBanana = async (file: Blob) => {
   const formData = new FormData();
